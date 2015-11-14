@@ -83,9 +83,9 @@ module Hyalite
       end
 
       def register_container(container)
-        root_id = root_id(container)
-        if root_id
-          root_id = InstanceHandles.root_id_from_node_id(root_id)
+        node_id = root_id(container)
+        if node_id
+          root_id = InstanceHandles.root_id_from_node_id(node_id)
         end
 
         unless root_id
@@ -158,6 +158,12 @@ module Hyalite
         if node.node_type == Browser::DOM::Node::ELEMENT_NODE
           node.attr(ID_ATTR_NAME)
         end
+      end
+
+      # cf. ReactMount#findReactContainerForID
+      def container_for_id(id)
+        root_id = InstanceHandles.root_id_from_node_id(id)
+        @containers_by_root_id[root_id]
       end
 
       def node(id)
@@ -236,6 +242,29 @@ module Hyalite
         else
           contains_node(outer_node, inner_node.parent)
         end
+      end
+
+      def find_first_hylite_dom(node)
+        while node && node.parent != node
+          next unless node.node_type == Browser::DOM::Node::ELEMENT_NODE
+
+          next unless node_id = internal_id(node)
+
+          root_id = InstanceHandles.root_id_from_node_id(node_id)
+
+          current = node
+          loop do
+            last_id = internal_id(current)
+            return nil unless current = current.parent
+            break unless last_id == root_id
+          end
+
+          return node if current == @containers_by_root_id[root_id]
+
+          node = node.parent_node
+        end
+
+        nil
       end
     end
   end
