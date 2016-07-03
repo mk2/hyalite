@@ -27,7 +27,7 @@ module Hyalite
       props = @dom_component.current_element.props
 
       if props[:checked] || @wrapper_state[:initialChecked]
-        props.merge({
+        props = props.merge({
           checked: props[:checked] || @wrapper_state[:initialChecked],
         })
       end
